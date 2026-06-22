@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculadora de Notas – Carreras Técnicas</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:       #0f1117;
+    --surface:  #1a1d27;
+    --border:   #2a2d3a;
+    --accent:   #5b8af5;
+    --green:    #3ecf74;
+    --red:      #f05252;
+    --yellow:   #f5c842;
+    --text:     #e4e6f0;
+    --muted:    #6b7280;
+    --mono:     'IBM Plex Mono', monospace;
+    --sans:     'IBM Plex Sans', sans-serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    padding: 2rem 1rem 4rem;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+  }
+
+  header .eyebrow {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.18em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+
+  header h1 {
+    font-size: clamp(1.6rem, 4vw, 2.4rem);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+
+  header p {
+    margin-top: 0.6rem;
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+
+  .grid {
+    display: grid;
+    gap: 0.75rem;
+    max-width: 760px;
+    margin: 0 auto;
+  }
+
+  /* ── Subject card ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .card:focus-within { border-color: var(--accent); }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+    gap: 0.5rem;
+  }
+
+  .subject-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+    flex: 1;
+  }
+
+  .weight-badge {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--muted);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.15rem 0.5rem;
+    white-space: nowrap;
+  }
+
+  .card-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0;
+  }
+
+  .input-cell {
+    padding: 0.75rem 1rem;
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .input-cell:last-child { border-right: none; }
+
+  .input-cell label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    font-family: var(--mono);
+  }
+
+  .input-cell input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 1.1rem;
+    font-weight: 600;
+    width: 100%;
+    -moz-appearance: textfield;
+  }
+
+  .input-cell input::-webkit-outer-spin-button,
+  .input-cell input::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+  .input-cell input::placeholder { color: var(--border); }
+
+  .result-cell {
+    background: rgba(91,138,245,0.06);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 0.75rem 1rem;
+  }
+
+  .result-cell .label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    font-family: var(--mono);
+    margin-bottom: 0.2rem;
+  }
+
+  .result-cell .val {
+    font-family: var(--mono);
+    font-size: 1.0rem;
+    font-weight: 600;
+  }
+
+  /* ── Final panel ── */
+  .final-panel {
+    max-width: 760px;
+    margin: 1.5rem auto 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.5rem 1.5rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .final-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .final-label {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    margin-bottom: 0.3rem;
+  }
+
+  .final-score {
+    font-family: var(--mono);
+    font-size: clamp(2.5rem, 8vw, 3.8rem);
+    font-weight: 600;
+    line-height: 1;
+    transition: color 0.3s;
+  }
+
+  .status-badge {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    padding: 0.35rem 0.9rem;
+    border-radius: 6px;
+    text-transform: uppercase;
+    align-self: flex-end;
+    margin-bottom: 0.25rem;
+  }
+
+  .status-badge.pass  { background: rgba(62,207,116,0.15); color: var(--green); border: 1px solid rgba(62,207,116,0.3); }
+  .status-badge.fail  { background: rgba(240,82,82,0.15);  color: var(--red);   border: 1px solid rgba(240,82,82,0.3); }
+  .status-badge.warn  { background: rgba(245,200,66,0.12); color: var(--yellow);border: 1px solid rgba(245,200,66,0.3); }
+  .status-badge.empty { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+
+  /* Target info box */
+  .target-box {
+    background: rgba(91, 138, 245, 0.08);
+    border: 1px dashed var(--accent);
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    color: var(--text);
+    display: none;
+  }
+
+  /* Progress bar */
+  .bar-track {
+    width: 100%;
+    height: 6px;
+    background: var(--border);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    transition: width 0.4s ease, background 0.3s;
+    background: var(--accent);
+  }
+
+  .breakdown {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .breakdown-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+  }
+
+  .breakdown-item .b-name {
+    font-size: 0.68rem;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .breakdown-item .b-pts {
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    font-weight: 600;
+  }
+
+  @media (max-width: 500px) {
+    .card-body { grid-template-columns: 1fr 1fr; }
+    .result-cell { grid-column: 1 / -1; border-top: 1px solid var(--border); border-right: none; }
+    .input-cell { border-bottom: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">Carreras Técnicas</div>
+  <h1>Calculadora de Nota Final</h1>
+  <p>Ingresa tus notas (sobre 20). Cada parcial suma puntos de forma independiente a la nota final.</p>
+</header>
+
+<div class="grid" id="subjectGrid"></div>
+
+<div class="final-panel">
+  <div class="final-row">
+    <div>
+      <div class="final-label">Nota final acumulada</div>
+      <div class="final-score" id="finalScore">—</div>
+      <div id="finalNotice" style="font-family: var(--mono); font-size: 0.85rem; color: var(--muted); margin-top: 0.5rem;">
+        Ingresa notas para ver el resultado.
+      </div>
+    </div>
+    <div id="statusBadge" class="status-badge empty">Pendiente</div>
+  </div>
+  
+  <div id="targetBox" class="target-box"></div>
+
+  <div class="bar-track"><div class="bar-fill" id="barFill" style="width:0%"></div></div>
+  <div class="breakdown" id="breakdown"></div>
+</div>
+
+<script>
+const subjects = [
+  { name: "Álgebra",             pct: 28.57, pts: 5.71 },
+  { name: "Geometría Técnicas",  pct: 21.43, pts: 4.29 },
+  { name: "Física",              pct: 21.43, pts: 4.29 },
+  { name: "Química",             pct: 14.29, pts: 2.85 },
+  { name: "Ofimática",           pct:  7.14, pts: 1.43 },
+  { name: "COE",                 pct:  7.14, pts: 1.43 },
+];
+
+const grid = document.getElementById('subjectGrid');
+const finalScoreEl = document.getElementById('finalScore');
+const statusBadge = document.getElementById('statusBadge');
+const barFill = document.getElementById('barFill');
+const finalNotice = document.getElementById('finalNotice');
+const breakdownEl = document.getElementById('breakdown');
+const targetBox = document.getElementById('targetBox');
+
+// Build cards
+subjects.forEach((s, i) => {
+  const card = document.createElement('div');
+  card.className = 'card';
+  const halfPts = (s.pts / 2).toFixed(3);
+  card.innerHTML = `
+    <div class="card-header">
+      <span class="subject-name">${s.name}</span>
+      <span class="weight-badge">${s.pct.toFixed(2)}% · Máx: ${s.pts.toFixed(2)} pts (${halfPts} c/u)</span>
+    </div>
+    <div class="card-body">
+      <div class="input-cell">
+        <label>Parcial 1 /20</label>
+        <input type="number" min="0" max="20" step="0.01" placeholder="0.00"
+               id="p1_${i}" oninput="calc()" />
+      </div>
+      <div class="input-cell">
+        <label>Parcial 2 /20</label>
+        <input type="number" min="0" max="20" step="0.01" placeholder="0.00"
+               id="p2_${i}" oninput="calc()" />
+      </div>
+      <div class="input-cell result-cell">
+        <span class="label">Suma de parciales</span>
+        <span class="val" id="res_${i}">0.000 pts</span>
+      </div>
+    </div>
+  `;
+  grid.appendChild(card);
+});
+
+// Build breakdown stubs
+subjects.forEach((s, i) => {
+  const item = document.createElement('div');
+  item.className = 'breakdown-item';
+  item.innerHTML = `
+    <span class="b-name">${s.name}</span>
+    <span class="b-pts" id="bp_${i}">0.000 pts</span>
+  `;
+  breakdownEl.appendChild(item);
+});
+
+function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+function calc() {
+  let totalAccumulated = 0;
+  let p1FilledCount = 0;
+  let p2FilledCount = 0;
+  let totalP1Pts = 0;
+
+  subjects.forEach((s, i) => {
+    const v1 = parseFloat(document.getElementById(`p1_${i}`).value);
+    const v2 = parseFloat(document.getElementById(`p2_${i}`).value);
+    const resEl = document.getElementById(`res_${i}`);
+    const bpEl  = document.getElementById(`bp_${i}`);
+
+    const has1 = !isNaN(v1);
+    const has2 = !isNaN(v2);
+
+    let pts1 = 0;
+    let pts2 = 0;
+
+    if (has1) {
+      pts1 = (clamp(v1, 0, 20) / 20) * (s.pts / 2);
+      p1FilledCount++;
+      totalP1Pts += pts1;
+    }
+    if (has2) {
+      pts2 = (clamp(v2, 0, 20) / 20) * (s.pts / 2);
+      p2FilledCount++;
+    }
+
+    const currentSubjectTotal = pts1 + pts2;
+    totalAccumulated += currentSubjectTotal;
+
+    // Actualizar strings individuales de cada materia
+    if (has1 || has2) {
+      resEl.textContent = `${pts1.toFixed(3)} + ${pts2.toFixed(3)} → ${currentSubjectTotal.toFixed(3)} pts`;
+      bpEl.textContent  = `${currentSubjectTotal.toFixed(3)} pts`;
+    } else {
+      resEl.textContent = '0.000 pts';
+      bpEl.textContent  = '0.000 pts';
+    }
+  });
+
+  // Si no hay datos en absoluto
+  if (p1FilledCount === 0 && p2FilledCount === 0) {
+    finalScoreEl.textContent = '—';
+    finalScoreEl.style.color = 'var(--text)';
+    statusBadge.textContent = 'Pendiente';
+    statusBadge.className = 'status-badge empty';
+    barFill.style.width = '0%';
+    barFill.style.background = 'var(--accent)';
+    finalNotice.textContent = 'Ingresa notas para ver el resultado.';
+    targetBox.style.display = 'none';
+    return;
+  }
+
+  const finalRounded = Number(totalAccumulated.toFixed(2));
+  finalScoreEl.textContent = finalRounded.toFixed(2);
+  const pct = (totalAccumulated / 20) * 100;
+  barFill.style.width = Math.min(100, pct) + '%';
+
+  // Manejo de estados de aprobación
+  if (finalRounded >= 14) {
+    finalScoreEl.style.color = 'var(--green)';
+    barFill.style.background = 'var(--green)';
+    statusBadge.textContent = '✓ Aprobado';
+    statusBadge.className = 'status-badge pass';
+    finalNotice.textContent = '✅ Ya has alcanzado la nota mínima (≥ 14).';
+  } else if (finalRounded >= 12) {
+    finalScoreEl.style.color = 'var(--yellow)';
+    barFill.style.background = 'var(--yellow)';
+    statusBadge.textContent = '⚠ En riesgo';
+    statusBadge.className = 'status-badge warn';
+    finalNotice.textContent = '❌ Por debajo de 14. Necesitas más puntos.';
+  } else {
+    finalScoreEl.style.color = 'var(--red)';
+    barFill.style.background = 'var(--red)';
+    statusBadge.textContent = '✗ Reprobado';
+    statusBadge.className = 'status-badge fail';
+    finalNotice.textContent = '❌ Por debajo de 14. Necesitas más puntos.';
+  }
+
+  // LÓGICA DE PROYECCIÓN: Si se llenó todo el primer parcial y aún no se ha completado el segundo parcial
+  if (p1FilledCount === subjects.length && p2FilledCount < subjects.length) {
+    const pointsNeeded = 14.00 - totalP1Pts;
+    
+    if (pointsNeeded <= 0) {
+      targetBox.innerHTML = `🎯 <strong>¡Ya aprobaste!</strong> Tienes <strong>${totalP1Pts.toFixed(3)} pts</strong> solo con el Parcial 1.`;
+    } else if (pointsNeeded > 10.00) {
+      targetBox.innerHTML = `⚠ Necesitas <strong>${pointsNeeded.toFixed(3)} pts</strong> en el Parcial 2, pero el máximo disponible es 10.000 pts.`;
+    } else {
+      // Calcular nota promedio requerida en los exámenes del parcial 2 (base 20)
+      // Como el parcial 2 vale 10 puntos en total de la nota final: (puntos_necesitados / 10) * 20
+      const averageGradeNeeded = (pointsNeeded / 10) * 20;
+      targetBox.innerHTML = `🎯 <strong>Meta Parcial 2:</strong> Necesitas rescatar mínimo <strong>${pointsNeeded.toFixed(3)} pts</strong> de los 10.00 pts del segundo parcial para aprobar con 14.00.<br>💡 <em>Equivale a un promedio global de <strong>${averageGradeNeeded.toFixed(2)}/20</strong> en el Parcial 2.</em>`;
+    }
+    targetBox.style.display = 'block';
+  } else {
+    targetBox.style.display = 'none';
+  }
+}
+</script>
+</body>
+</html>
